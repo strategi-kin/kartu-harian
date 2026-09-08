@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Kartu Harian</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#EDE7D8">
+<link rel="icon" href="./icon-192.png">
+<link rel="apple-touch-icon" href="./icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#EDE7D8;
+    --paper-card:#FBF8F0;
+    --ink:#242A20;
+    --ink-soft:#5B5F52;
+    --green:#33513A;
+    --green-deep:#233A29;
+    --green-wash:#E4EAE0;
+    --ochre:#B4832C;
+    --ochre-soft:#E9D9B4;
+    --brick:#9C4130;
+    --line: rgba(36,42,32,0.18);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #app{
+    width:100%;
+    max-width:460px;
+    padding:22px 18px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:1.5px solid var(--ink);
+    padding-bottom:12px;
+  }
+  h1{
+    font-family:'Bitter', serif;
+    font-size:22px;
+    font-weight:700;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  .streak{
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:right;
+    line-height:1.3;
+  }
+  .streak b{
+    color:var(--ochre);
+    font-family:'Bitter', serif;
+    font-size:17px;
+  }
+
+  .dots-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+  }
+  .dots{
+    display:flex;
+    gap:5px;
+    flex:1;
+  }
+  .dot{
+    flex:1;
+    height:7px;
+    border-radius:4px;
+    background:rgba(36,42,32,0.14);
+    border:1px solid transparent;
+  }
+  .dot.filled{ background:var(--green); }
+  .dot.current{ background:var(--ochre); }
+  .dots-label{
+    font-size:12px;
+    color:var(--ink-soft);
+    white-space:nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .chips-wrap{
+    position:relative;
+  }
+  .chips{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding-bottom:4px;
+    -ms-overflow-style:none;
+    scrollbar-width:none;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chips-wrap::after{
+    content:"";
+    position:absolute;
+    right:0; top:0; bottom:4px;
+    width:28px;
+    background:linear-gradient(to right, rgba(237,231,216,0), var(--paper));
+    pointer-events:none;
+  }
+  .chip{
+    flex:none;
+    font-size:12.5px;
+    padding:6px 12px;
+    border:1.3px solid var(--line);
+    border-radius:20px;
+    color:var(--ink-soft);
+    background:transparent;
+    cursor:pointer;
+    white-space:nowrap;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+  .chip.active{
+    border-color:var(--ink);
+    color:var(--ink);
+    background:var(--ochre-soft);
+    font-weight:600;
+  }
+
+  .session-note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    background:var(--ochre-soft);
+    border-radius:6px;
+    padding:8px 10px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:8px;
+  }
+  .session-note button{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:12px;
+    font-weight:600;
+    border:1.3px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    padding:5px 10px;
+    border-radius:14px;
+    cursor:pointer;
+    white-space:nowrap;
+  }
+
+  .stage{
+    position:relative;
+    min-height:300px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .card{
+    width:100%;
+    background:var(--paper-card);
+    border:1.6px solid var(--ink);
+    border-radius:10px;
+    box-shadow:4px 4px 0 rgba(36,42,32,0.14);
+    padding:22px 20px 20px;
+    display:flex;
+    flex-direction:column;
+    gap:0;
+    min-height:250px;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .card-eyebrow{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    border-bottom:1px solid var(--line);
+    padding-bottom:9px;
+    margin-bottom:16px;
+  }
+
+  .prompt-block{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .prompt-word{
+    font-family:'Bitter', serif;
+    font-size:22px;
+    line-height:1.35;
+    font-weight:700;
+    color:var(--ink);
+  }
+  .prompt-example{
+    font-size:14.5px;
+    line-height:1.55;
+    color:var(--ink-soft);
+    padding-left:12px;
+    border-left:2.5px solid var(--line);
+    font-style:italic;
+  }
+  .card-hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:18px;
+  }
+
+  .card-en{
+    display:none;
+    border-top:1.4px dashed var(--line);
+    padding-top:16px;
+    margin-top:16px;
+  }
+  .card.flipped .card-en{ display:block; }
+  .card.flipped .card-hint{ display:none; }
+
+  .answer-block{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  .en-word{
+    font-family:'Bitter', serif;
+    font-size:23px;
+    font-weight:700;
+    color:var(--green-deep);
+  }
+  .en-chunk{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:-4px;
+  }
+  .en-sentence{
+    font-size:15.5px;
+    line-height:1.55;
+    color:var(--ink);
+    background:var(--green-wash);
+    padding:10px 12px;
+    border-radius:6px;
+    border-left:3px solid var(--green);
+  }
+
+  .speak-row{
+    display:flex;
+    gap:8px;
+    margin-top:14px;
+  }
+  .speak-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13px;
+    border:1.4px solid var(--ink);
+    background:var(--paper);
+    color:var(--ink);
+    padding:8px 12px;
+    border-radius:7px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+  }
+  .speak-btn:active{ transform:translateY(1px); }
+  .speak-btn.slow{ color:var(--ink-soft); }
+
+  .rate-row{
+    display:flex;
+    gap:10px;
+  }
+  .rate-btn{
+    flex:1;
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:14px;
+    font-weight:600;
+    padding:13px 10px;
+    border-radius:8px;
+    border:1.6px solid var(--ink);
+    cursor:pointer;
+    background:var(--paper-card);
+    color:var(--ink);
+  }
+  .rate-btn.got-it{
+    background:var(--green);
+    border-color:var(--green);
+    color:#F4F1E6;
+  }
+  .rate-btn:disabled{ opacity:0.35; cursor:default; }
+
+  .tap-instruction{
+    text-align:center;
+    font-size:12px;
+    color:var(--ink-soft);
+    min-height:16px;
+  }
+  .tap-instruction.praise{
+    color:var(--green-deep);
+    font-weight:600;
+  }
+
+  .done-panel{
+    text-align:center;
+    padding:20px 8px 6px;
+  }
+  .done-panel .badge{
+    font-size:34px;
+    line-height:1;
+    margin-bottom:10px;
+  }
+  .done-panel h2{
+    font-family:'Bitter', serif;
+    font-size:21px;
+    margin:0 0 8px;
+  }
+  .done-panel p{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:0 0 18px;
+    line-height:1.6;
+  }
+  .done-panel b{ color:var(--ochre); }
+  .ghost-btn{
+    font-family:'IBM Plex Sans', sans-serif;
+    font-size:13.5px;
+    font-weight:600;
+    border:1.4px solid var(--ink);
+    background:transparent;
+    color:var(--ink);
+    padding:10px 16px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+
+  footer{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-top:1.5px solid var(--ink);
+    padding-top:10px;
+    font-size:12px;
+    color:var(--ink-soft);
+    gap:10px;
+  }
+  footer span{
+    cursor:help;
+  }
+  .reset-link{
+    color:var(--brick);
+    background:none;
+    border:none;
+    font-size:12px;
+    text-decoration:underline;
+    cursor:pointer;
+    font-family:'IBM Plex Sans', sans-serif;
+  }
+
+  @keyframes pop{
+    0%{ transform:scale(1); }
+    40%{ transform:scale(1.05); }
+    100%{ transform:scale(1); }
+  }
+  .card.pop{ animation:pop .28s ease; }
+
+  .loading-msg{
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    padding:40px 0;
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="loading-msg" id="loading">Menyiapkan kartu hari ini...</div>
+</div>
+
+<script>
+const RAW_DATA = [{"id":1,"cat":"100 daily action verbs","id_main":"Menjadi","id_example":"Saya ingin menjadi profesional","en_word":"Be","en_chunk":"Want to be","en_sentence":"I want to be a professional."},{"id":2,"cat":"100 daily action verbs","id_main":"Memiliki","id_example":"Saya punya masalah dengan laptop saya","en_word":"Have","en_chunk":"Have a problem","en_sentence":"I have a problem with my laptop."},{"id":3,"cat":"100 daily action verbs","id_main":"Melakukan","id_example":"Lakukan saja yang terbaik dalam tes itu","en_word":"Do","en_chunk":"Do your best","en_sentence":"Just do your best in the test."},{"id":4,"cat":"100 daily action verbs","id_main":"Mengatakan","id_example":"Sampaikan salam kepada keluargamu untukku","en_word":"Say","en_chunk":"Say hello to...","en_sentence":"Say hello to your family for me."},{"id":5,"cat":"100 daily action verbs","id_main":"Pergi","id_example":"Saya pergi bekerja naik motor","en_word":"Go","en_chunk":"Go to work","en_sentence":"I go to work by motorcycle."},{"id":6,"cat":"100 daily action verbs","id_main":"Mendapatkan","id_example":"Tolong bersiap-siap sekarang","en_word":"Get","en_chunk":"Get ready","en_sentence":"Please get ready now."},{"id":7,"cat":"100 daily action verbs","id_main":"Membuat","id_example":"Sudah waktunya mengambil keputusan","en_word":"Make","en_chunk":"Make a decision","en_sentence":"It's time to make a decision."},{"id":8,"cat":"100 daily action verbs","id_main":"Tahu","id_example":"Saya tidak tahu jawabannya","en_word":"Know","en_chunk":"I don't know","en_sentence":"I don't know the answer."},{"id":9,"cat":"100 daily action verbs","id_main":"Berpikir","id_example":"Apakah dia datang? Saya rasa begitu","en_word":"Think","en_chunk":"I think so","en_sentence":"Is he coming? I think so."},{"id":10,"cat":"100 daily action verbs","id_main":"Mengambil","id_example":"Mari istirahat selama 10 menit","en_word":"Take","en_chunk":"Take a break","en_sentence":"Let's take a break for 10 minutes."},{"id":11,"cat":"100 daily action verbs","id_main":"Melihat","id_example":"Oke, sampai jumpa lagi!","en_word":"See","en_chunk":"See you later","en_sentence":"Okay, see you later!"},{"id":12,"cat":"100 daily action verbs","id_main":"Datang","id_example":"Silakan masuk dan duduk","en_word":"Come","en_chunk":"Come in","en_sentence":"Please come in and sit down."},{"id":13,"cat":"100 daily action verbs","id_main":"Ingin","id_example":"Saya ingin minum air","en_word":"Want","en_chunk":"I want to...","en_sentence":"I want to drink some water."},{"id":14,"cat":"100 daily action verbs","id_main":"Menggunakan","id_example":"Bisakah kamu menggunakan komputer?","en_word":"Use","en_chunk":"Use a computer","en_sentence":"Can you use a computer?"},{"id":15,"cat":"100 daily action verbs","id_main":"Menemukan","id_example":"Kita akan menemukan cara melakukannya","en_word":"Find","en_chunk":"Find a way","en_sentence":"We will find a way to do it."},{"id":16,"cat":"100 daily action verbs","id_main":"Memberi","id_example":"Bisakah kamu membantuku?","en_word":"Give","en_chunk":"Give me a hand","en_sentence":"Can you give me a hand?"},{"id":17,"cat":"100 daily action verbs","id_main":"Memberitahu","id_example":"Kamu harus mengatakan yang sejujurnya","en_word":"Tell","en_chunk":"Tell the truth","en_sentence":"You must tell the truth."},{"id":18,"cat":"100 daily action verbs","id_main":"Bekerja","id_example":"Kamu perlu bekerja keras","en_word":"Work","en_chunk":"Work hard","en_sentence":"You need to work hard."},{"id":19,"cat":"100 daily action verbs","id_main":"Bertanya","id_example":"Bolehkah saya bertanya?","en_word":"Ask","en_chunk":"Ask a question","en_sentence":"May I ask a question?"},{"id":20,"cat":"100 daily action verbs","id_main":"Merasa","id_example":"Saya harap kamu segera merasa lebih baik","en_word":"Feel","en_chunk":"Feel better","en_sentence":"I hope you feel better soon."},{"id":21,"cat":"100 daily action verbs","id_main":"Mencoba","id_example":"Jangan menyerah, coba lagi saja","en_word":"Try","en_chunk":"Try again","en_sentence":"Don't give up, just try again."},{"id":22,"cat":"100 daily action verbs","id_main":"Meninggalkan","id_example":"Kamu bisa meninggalkan pesan","en_word":"Leave","en_chunk":"Leave a message","en_sentence":"You can leave a message."},{"id":23,"cat":"100 daily action verbs","id_main":"Memanggil","id_example":"Tolong telepon balik saya nanti","en_word":"Call","en_chunk":"Call me back","en_sentence":"Please call me back later."},{"id":24,"cat":"100 daily action verbs","id_main":"Menunggu","id_example":"Tolong tunggu saya di gerbang","en_word":"Wait","en_chunk":"Wait for me","en_sentence":"Please wait for me at the gate."},{"id":25,"cat":"100 daily action verbs","id_main":"Membantu","id_example":"Kita harus saling membantu","en_word":"Help","en_chunk":"Help each other","en_sentence":"We should help each other."},{"id":26,"cat":"100 daily action verbs","id_main":"Berbicara","id_example":"Saya akan bicara padamu nanti","en_word":"Talk","en_chunk":"Talk to you later","en_sentence":"I'll talk to you later."},{"id":27,"cat":"100 daily action verbs","id_main":"Mendengar","id_example":"Saya suka mendengarkan musik","en_word":"Listen","en_chunk":"Listen to music","en_sentence":"I like to listen to music."},{"id":28,"cat":"100 daily action verbs","id_main":"Berarti","id_example":"Saya bingung, apa maksudmu?","en_word":"Mean","en_chunk":"What do you mean?","en_sentence":"I'm confused, what do you mean?"},{"id":29,"cat":"100 daily action verbs","id_main":"Bertemu","id_example":"Hai! Senang bertemu denganmu","en_word":"Meet","en_chunk":"Nice to meet you","en_sentence":"Hi! Nice to meet you."},{"id":30,"cat":"100 daily action verbs","id_main":"Percaya","id_example":"Tolong percaya padaku","en_word":"Believe","en_chunk":"Believe in me","en_sentence":"Please believe in me."},{"id":31,"cat":"100 daily action verbs","id_main":"Mengingat","id_example":"Ingatlah untuk membawa payungmu","en_word":"Remember","en_chunk":"Remember to...","en_sentence":"Remember to bring your umbrella."},{"id":32,"cat":"100 daily action verbs","id_main":"Lupa","id_example":"Jangan lupa mengunci pintu","en_word":"Forget","en_chunk":"Don't forget to...","en_sentence":"Don't forget to lock the door."},{"id":33,"cat":"100 daily action verbs","id_main":"Mengerti","id_example":"Ya, saya mengerti aturannya","en_word":"Understand","en_chunk":"I understand","en_sentence":"Yes, I understand the rule."},{"id":34,"cat":"100 daily action verbs","id_main":"Berharap","id_example":"Apakah akan baik-baik saja? Saya harap begitu","en_word":"Hope","en_chunk":"I hope so","en_sentence":"Will it be okay? I hope so."},{"id":35,"cat":"100 daily action verbs","id_main":"Mempelajari","id_example":"Saya ingin belajar bahasa Inggris lebih cepat","en_word":"Learn","en_chunk":"Learn English","en_sentence":"I want to learn English faster."},{"id":36,"cat":"100 daily action verbs","id_main":"Membeli","id_example":"Mari kita beli makanan","en_word":"Buy","en_chunk":"Buy some food","en_sentence":"Let's buy some food."},{"id":37,"cat":"100 daily action verbs","id_main":"Membayar","id_example":"Tolong perhatikan saya","en_word":"Pay","en_chunk":"Pay attention","en_sentence":"Please pay attention to me."},{"id":38,"cat":"100 daily action verbs","id_main":"Menulis","id_example":"Tunggu, biarkan saya mencatatnya","en_word":"Write","en_chunk":"Write it down","en_sentence":"Wait, let me write it down."},{"id":39,"cat":"100 daily action verbs","id_main":"Membaca","id_example":"Saya membaca buku setiap malam","en_word":"Read","en_chunk":"Read a book","en_sentence":"I read a book every night."},{"id":40,"cat":"100 daily action verbs","id_main":"Berjalan","id_example":"Jangan pergi menjauh begitu saja","en_word":"Walk","en_chunk":"Walk away","en_sentence":"Don't just walk away."},{"id":41,"cat":"100 daily action verbs","id_main":"Memulai","id_example":"Kita harus mulai sekarang","en_word":"Start","en_chunk":"Start now","en_sentence":"We should start now."},{"id":42,"cat":"100 daily action verbs","id_main":"Menutup","id_example":"Tolong tutup pintunya","en_word":"Close","en_chunk":"Close the door","en_sentence":"Please close the door."},{"id":43,"cat":"100 daily action verbs","id_main":"Membuka","id_example":"Buka matamu pelan-pelan","en_word":"Open","en_chunk":"Open your eyes","en_sentence":"Open your eyes slowly."},{"id":44,"cat":"100 daily action verbs","id_main":"Berhenti","id_example":"Tolong hentikan itu, saya lelah","en_word":"Stop","en_chunk":"Stop it","en_sentence":"Please stop it, I'm tired."},{"id":45,"cat":"100 daily action verbs","id_main":"Berubah","id_example":"Kamu bisa berubah pikiran","en_word":"Change","en_chunk":"Change your mind","en_sentence":"You can change your mind."},{"id":46,"cat":"100 daily action verbs","id_main":"Berlari","id_example":"Kita kehabisan kopi","en_word":"Run","en_chunk":"Run out of...","en_sentence":"We run out of coffee."},{"id":47,"cat":"100 daily action verbs","id_main":"Membawa","id_example":"Bisakah kamu membawanya ke sini?","en_word":"Bring","en_chunk":"Bring it here","en_sentence":"Can you bring it here?"},{"id":48,"cat":"100 daily action verbs","id_main":"Menaruh","id_example":"Taruh di bawah, di atas meja","en_word":"Put","en_chunk":"Put it down","en_sentence":"Put it down on the table."},{"id":49,"cat":"100 daily action verbs","id_main":"Menjaga","id_example":"Mari kita tetap berkomunikasi!","en_word":"Keep","en_chunk":"Keep in touch","en_sentence":"Let's keep in touch!"},{"id":50,"cat":"100 daily action verbs","id_main":"Duduk","id_example":"Silakan duduk di sini","en_word":"Sit","en_chunk":"Sit down","en_sentence":"Please sit down here."},{"id":51,"cat":"100 daily action verbs","id_main":"Berdiri","id_example":"Silakan berdiri","en_word":"Stand","en_chunk":"Stand up","en_sentence":"Please stand up."},{"id":52,"cat":"100 daily action verbs","id_main":"Kehilangan","id_example":"Saya ingin menurunkan berat badan","en_word":"Lose","en_chunk":"Lose weight","en_sentence":"I want to lose weight."},{"id":53,"cat":"100 daily action verbs","id_main":"Menang","id_example":"Kami berharap memenangkan pertandingan","en_word":"Win","en_chunk":"Win the game","en_sentence":"We hope to win the game."},{"id":54,"cat":"100 daily action verbs","id_main":"Mengirim","id_example":"Saya akan mengirim email padamu","en_word":"Send","en_chunk":"Send an email","en_sentence":"I will send an email to you."},{"id":55,"cat":"100 daily action verbs","id_main":"Tumbuh","id_example":"Saya ingin melihat anak-anak saya tumbuh besar","en_word":"Grow","en_chunk":"Grow up","en_sentence":"I want to see my kids grow up."},{"id":56,"cat":"100 daily action verbs","id_main":"Terjadi","id_example":"Kamu tampak sedih, apa yang terjadi?","en_word":"Happen","en_chunk":"What happened?","en_sentence":"You look sad, what happened?"},{"id":57,"cat":"100 daily action verbs","id_main":"Menawarkan","id_example":"Selalu tawarkan bantuan kepada orang lain","en_word":"Offer","en_chunk":"Offer help","en_sentence":"Always offer help to others."},{"id":58,"cat":"100 daily action verbs","id_main":"Mempertimbangkan","id_example":"Pertimbangkan biayanya terlebih dahulu","en_word":"Consider","en_chunk":"Consider the cost","en_sentence":"Consider the cost first."},{"id":59,"cat":"100 daily action verbs","id_main":"Memungkinkan","id_example":"Izinkan saya memperkenalkan diri","en_word":"Allow","en_chunk":"Allow me to...","en_sentence":"Allow me to introduce myself."},{"id":60,"cat":"100 daily action verbs","id_main":"Menyarankan","id_example":"Bisakah kamu menyarankan tempat makan malam?","en_word":"Suggest","en_chunk":"Suggest a place","en_sentence":"Can you suggest a place for dinner?"},{"id":61,"cat":"100 daily action verbs","id_main":"Menyelesaikan","id_example":"Selesaikan pekerjaanmu sebelum pergi","en_word":"Finish","en_chunk":"Finish your work","en_sentence":"Finish your work before you go."},{"id":62,"cat":"100 daily action verbs","id_main":"Mengikuti","id_example":"Kamu harus mengikuti aturan","en_word":"Follow","en_chunk":"Follow the rules","en_sentence":"You must follow the rules."},{"id":63,"cat":"100 daily action verbs","id_main":"Menunjukkan","id_example":"Bisakah kamu tunjukkan cara melakukan ini?","en_word":"Show","en_chunk":"Show me how","en_sentence":"Can you show me how to do this?"},{"id":64,"cat":"100 daily action verbs","id_main":"Bermain","id_example":"Saya suka bermain gitar","en_word":"Play","en_chunk":"Play guitar","en_sentence":"I like to play guitar."},{"id":65,"cat":"100 daily action verbs","id_main":"Menonton","id_example":"Mari kita menonton film bersama","en_word":"Watch","en_chunk":"Watch a movie","en_sentence":"Let's watch a movie together."},{"id":66,"cat":"100 daily action verbs","id_main":"Pindah","id_example":"Kita perlu bergerak maju","en_word":"Move","en_chunk":"Move forward","en_sentence":"We need to move forward."},{"id":67,"cat":"100 daily action verbs","id_main":"Menambah","id_example":"Tambahkan sedikit gula ke kopi saya","en_word":"Add","en_chunk":"Add some sugar","en_sentence":"Add some sugar to my coffee."},{"id":68,"cat":"100 daily action verbs","id_main":"Menghabiskan","id_example":"Saya suka menghabiskan waktu dengan keluarga","en_word":"Spend","en_chunk":"Spend time","en_sentence":"I love to spend time with family."},{"id":69,"cat":"100 daily action verbs","id_main":"Tinggal","id_example":"Saya hanya akan tinggal di rumah malam ini","en_word":"Stay","en_chunk":"Stay at home","en_sentence":"I'll just stay at home tonight."},{"id":70,"cat":"100 daily action verbs","id_main":"Tertawa","id_example":"Jangan tertawa atas kesalahannya","en_word":"Laugh","en_chunk":"Laugh at...","en_sentence":"Don't laugh at his mistake."},{"id":71,"cat":"100 daily action verbs","id_main":"Tersenyum","id_example":"Dia selalu tersenyum padaku","en_word":"Smile","en_chunk":"Smile at me","en_sentence":"She always smiles at me."},{"id":72,"cat":"100 daily action verbs","id_main":"Mempersiapkan","id_example":"Bersiaplah untuk kemungkinan terburuk","en_word":"Prepare","en_chunk":"Prepare for...","en_sentence":"Prepare for the worst case."},{"id":73,"cat":"100 daily action verbs","id_main":"Memeriksa","id_example":"Ada toko baru, ayo lihat!","en_word":"Check","en_chunk":"Check it out","en_sentence":"There is a new shop, check it out!"},{"id":74,"cat":"100 daily action verbs","id_main":"Membangun","id_example":"Mereka ingin membangun rumah","en_word":"Build","en_chunk":"Build a house","en_sentence":"They want to build a house."},{"id":75,"cat":"100 daily action verbs","id_main":"Memilih","id_example":"Kamu harus memilih dengan bijak","en_word":"Choose","en_chunk":"Choose wisely","en_sentence":"You have to choose wisely."},{"id":76,"cat":"100 daily action verbs","id_main":"Jatuh","id_example":"Saya biasanya tertidur jam 10 malam","en_word":"Fall","en_chunk":"Fall asleep","en_sentence":"I usually fall asleep at 10 PM."},{"id":77,"cat":"100 daily action verbs","id_main":"Memotong","id_example":"Cukup ya menggodaku!","en_word":"Cut","en_chunk":"Cut it out","en_sentence":"Stop teasing me, cut it out!"},{"id":78,"cat":"100 daily action verbs","id_main":"Memimpin","id_example":"Kamu tahu jalannya, pimpinlah di depan","en_word":"Lead","en_chunk":"Lead the way","en_sentence":"You know the road, lead the way."},{"id":79,"cat":"100 daily action verbs","id_main":"Menjelaskan","id_example":"Biar saya jelaskan alasannya","en_word":"Explain","en_chunk":"Explain the reason","en_sentence":"Let me explain the reason."},{"id":80,"cat":"100 daily action verbs","id_main":"Mendukung","id_example":"Tim mana yang kamu dukung?","en_word":"Support","en_chunk":"Support a team","en_sentence":"Which team do you support?"},{"id":81,"cat":"100 daily action verbs","id_main":"Makan","id_example":"Mari kita makan di luar malam ini","en_word":"Eat","en_chunk":"Eat out","en_sentence":"Let's eat out tonight."},{"id":82,"cat":"100 daily action verbs","id_main":"Minum","id_example":"Minum lebih banyak air untuk kesehatan","en_word":"Drink","en_chunk":"Drink water","en_sentence":"Drink more water for health."},{"id":83,"cat":"100 daily action verbs","id_main":"Tidur","id_example":"Sudah larut, pergilah tidur sekarang","en_word":"Sleep","en_chunk":"Go to sleep","en_sentence":"It's late, go to sleep now."},{"id":84,"cat":"100 daily action verbs","id_main":"Mati","id_example":"Dia mau mati demi negaranya","en_word":"Die","en_chunk":"Die for...","en_sentence":"He would die for his country."},{"id":85,"cat":"100 daily action verbs","id_main":"Membunuh","id_example":"Saya membaca buku untuk membunuh waktu","en_word":"Kill","en_chunk":"Kill time","en_sentence":"I read a book to kill time."},{"id":86,"cat":"100 daily action verbs","id_main":"Tampak","id_example":"Kamu tampak bahagia hari ini","en_word":"Seem","en_chunk":"Seem happy","en_sentence":"You seem happy today."},{"id":87,"cat":"100 daily action verbs","id_main":"Muncul","id_example":"Dia akan muncul di TV besok","en_word":"Appear","en_chunk":"Appear on TV","en_sentence":"He will appear on TV tomorrow."},{"id":88,"cat":"100 daily action verbs","id_main":"Mendorong","id_example":"Dorong pintunya untuk membukanya","en_word":"Push","en_chunk":"Push the door","en_sentence":"Push the door to open it."},{"id":89,"cat":"100 daily action verbs","id_main":"Menarik","id_example":"Tarik tuasnya pelan-pelan","en_word":"Pull","en_chunk":"Pull the handle","en_sentence":"Pull the handle slowly."},{"id":90,"cat":"100 daily action verbs","id_main":"Mencapai","id_example":"Bekerja keraslah untuk mencapai tujuanmu","en_word":"Reach","en_chunk":"Reach a goal","en_sentence":"Work hard to reach your goal."},{"id":91,"cat":"100 daily action verbs","id_main":"Menerima","id_example":"Saya senang menerima hadiah","en_word":"Receive","en_chunk":"Receive a gift","en_sentence":"I'm happy to receive a gift."},{"id":92,"cat":"100 daily action verbs","id_main":"Mengurangi","id_example":"Yoga bisa membantu mengurangi stres","en_word":"Reduce","en_chunk":"Reduce stress","en_sentence":"Yoga can help reduce stress."},{"id":93,"cat":"100 daily action verbs","id_main":"Tetap","id_example":"Tolong tetap tenang","en_word":"Remain","en_chunk":"Remain calm","en_sentence":"Please remain calm."},{"id":94,"cat":"100 daily action verbs","id_main":"Mengingat kembali","id_example":"Saya tidak bisa mengingat namanya","en_word":"Recall","en_chunk":"Recall the name","en_sentence":"I can't recall her name."},{"id":95,"cat":"100 daily action verbs","id_main":"Melaporkan","id_example":"Laporkan masalahnya kepada manajer","en_word":"Report","en_chunk":"Report a problem","en_sentence":"Report a problem to the manager."},{"id":96,"cat":"100 daily action verbs","id_main":"Membutuhkan","id_example":"Tugas ini membutuhkan bantuan","en_word":"Require","en_chunk":"Require help","en_sentence":"This task requires help."},{"id":97,"cat":"100 daily action verbs","id_main":"Melayani","id_example":"Mereka menyajikan sarapan jam 7 pagi","en_word":"Serve","en_chunk":"Serve breakfast","en_sentence":"They serve breakfast at 7 AM."},{"id":98,"cat":"100 daily action verbs","id_main":"Mengatur","id_example":"Jangan lupa pasang alarm","en_word":"Set","en_chunk":"Set an alarm","en_sentence":"Don't forget to set an alarm."},{"id":99,"cat":"100 daily action verbs","id_main":"Berbagi","id_example":"Saya berbagi kamar dengan kakak saya","en_word":"Share","en_chunk":"Share a room","en_sentence":"I share a room with my brother."},{"id":100,"cat":"100 daily action verbs","id_main":"Membawa","id_example":"Bisakah kamu bantu saya membawakan tas ini?","en_word":"Carry","en_chunk":"Carry a bag","en_sentence":"Can you help me carry this bag?"},{"id":101,"cat":"20 fluency chunks","id_main":"Sejujurnya...","id_example":"Sejujurnya, saya tidak tahu jawabannya","en_word":"To be honest...","en_chunk":null,"en_sentence":"To be honest, I don't know the answer."},{"id":102,"cat":"20 fluency chunks","id_main":"Sebenarnya...","id_example":"Sebenarnya, itu adalah masalah yang sulit","en_word":"Actually...","en_chunk":null,"en_sentence":"Actually, it is a difficult problem."},{"id":103,"cat":"20 fluency chunks","id_main":"Masalahnya adalah...","id_example":"Masalahnya adalah saya sangat sibuk","en_word":"The thing is...","en_chunk":null,"en_sentence":"The thing is, I am very busy."},{"id":104,"cat":"20 fluency chunks","id_main":"Ngomong-ngomong...","id_example":"Ngomong-ngomong, siapa namamu?","en_word":"By the way...","en_chunk":null,"en_sentence":"By the way, what is your name?"},{"id":105,"cat":"20 fluency chunks","id_main":"Setahu saya...","id_example":"Setahu saya, dia bekerja remote","en_word":"As far as I know...","en_chunk":null,"en_sentence":"As far as I know, he works remotely."},{"id":106,"cat":"20 fluency chunks","id_main":"Menurut saya...","id_example":"Menurut saya, ini adalah ide yang bagus","en_word":"In my opinion...","en_chunk":null,"en_sentence":"In my opinion, this is a good idea."},{"id":107,"cat":"20 fluency chunks","id_main":"Maksud saya adalah...","id_example":"Maksud saya, kita butuh lebih banyak waktu","en_word":"I mean...","en_chunk":null,"en_sentence":"I mean, we need more time."},{"id":108,"cat":"20 fluency chunks","id_main":"Biar saya berpikir sejenak","id_example":"Tunggu, biar saya berpikir sejenak","en_word":"Let me think...","en_chunk":null,"en_sentence":"Let me think for a second."},{"id":109,"cat":"20 fluency chunks","id_main":"Biar saya periksa dulu","id_example":"Biar saya periksa datanya dulu","en_word":"Let me check...","en_chunk":null,"en_sentence":"Let me check the data first."},{"id":110,"cat":"20 fluency chunks","id_main":"Begitu ya / Saya paham","id_example":"Oh, begitu ya. Saya mengerti sekarang","en_word":"I see","en_chunk":null,"en_sentence":"Oh, I see. I understand now."},{"id":111,"cat":"20 fluency chunks","id_main":"Tentu saja / Pasti","id_example":"Tentu saja, saya bisa membantumu","en_word":"Of course","en_chunk":null,"en_sentence":"Of course, I can help you."},{"id":112,"cat":"20 fluency chunks","id_main":"Secepat mungkin","id_example":"Saya akan mengirimnya secepat mungkin","en_word":"As soon as possible","en_chunk":null,"en_sentence":"I will send it as soon as possible."},{"id":113,"cat":"20 fluency chunks","id_main":"Tergantung...","id_example":"Itu tergantung pada harganya nanti","en_word":"It depends on...","en_chunk":null,"en_sentence":"It depends on the price later."},{"id":114,"cat":"20 fluency chunks","id_main":"Jangan khawatir","id_example":"Jangan khawatir tentang hal itu","en_word":"Don't worry","en_chunk":null,"en_sentence":"Don't worry about it."},{"id":115,"cat":"20 fluency chunks","id_main":"Tidak masalah / Sama-sama","id_example":"Tidak masalah, dengan senang hati","en_word":"No problem","en_chunk":null,"en_sentence":"No problem, my pleasure."},{"id":116,"cat":"20 fluency chunks","id_main":"Katakanlah...","id_example":"Katakanlah kita mulai belajar besok","en_word":"Let's say...","en_chunk":null,"en_sentence":"Let's say we start learning tomorrow."},{"id":117,"cat":"20 fluency chunks","id_main":"Hati-hati","id_example":"Hati-hati di jalan pulang nanti","en_word":"Take care","en_chunk":null,"en_sentence":"Take care on your way home later."},{"id":118,"cat":"20 fluency chunks","id_main":"Omong-omong tentang itu...","id_example":"Omong-omong, apakah kamu sudah selesai?","en_word":"Speaking of which...","en_chunk":null,"en_sentence":"Speaking of which, have you finished?"},{"id":119,"cat":"20 fluency chunks","id_main":"Sepertinya...","id_example":"Sepertinya akan turun hujan hari ini","en_word":"It looks like...","en_chunk":null,"en_sentence":"It looks like it's going to rain today."},{"id":120,"cat":"20 fluency chunks","id_main":"Hampir lupa!","id_example":"Hampir lupa! Saya harus membawa kunci saya","en_word":"I almost forgot!","en_chunk":null,"en_sentence":"I almost forgot to bring my keys."},{"id":121,"cat":"10 key adjectives","id_main":"Bagus / Buruk","id_example":"Ini adalah kabar yang bagus","en_word":"Good / Bad","en_chunk":null,"en_sentence":"This is good news."},{"id":122,"cat":"10 key adjectives","id_main":"Besar / Kecil","id_example":"Masalahnya sangat besar","en_word":"Big / Small","en_chunk":null,"en_sentence":"The problem is very big."},{"id":123,"cat":"10 key adjectives","id_main":"Mudah / Sulit","id_example":"Pekerjaannya sangat sulit bagi saya","en_word":"Easy / Difficult","en_chunk":null,"en_sentence":"The work is very difficult for me."},{"id":124,"cat":"10 key adjectives","id_main":"Panas / Dingin","id_example":"Kopinya masih sangat panas","en_word":"Hot / Cold","en_chunk":null,"en_sentence":"The coffee is still very hot."},{"id":125,"cat":"10 key adjectives","id_main":"Cepat / Lambat","id_example":"Koneksi internetnya sangat lambat","en_word":"Fast / Slow","en_chunk":null,"en_sentence":"The internet connection is very slow."},{"id":126,"cat":"10 key adjectives","id_main":"Mahal / Murah","id_example":"Laptop ini sangat mahal harganya","en_word":"Expensive / Cheap","en_chunk":null,"en_sentence":"This laptop is very expensive."},{"id":127,"cat":"10 key adjectives","id_main":"Senang / Sedih","id_example":"Saya merasa sangat senang hari ini","en_word":"Happy / Sad","en_chunk":null,"en_sentence":"I am very happy today."},{"id":128,"cat":"10 key adjectives","id_main":"Sibuk / Senggang","id_example":"Saya sangat sibuk sekarang","en_word":"Busy / Free","en_chunk":null,"en_sentence":"I am very busy right now."},{"id":129,"cat":"10 key adjectives","id_main":"Awal / Terlambat","id_example":"Maafkan saya, saya datang terlambat","en_word":"Early / Late","en_chunk":null,"en_sentence":"I am sorry, I am late."},{"id":130,"cat":"10 key adjectives","id_main":"Benar / Salah","id_example":"Itu adalah jawaban yang benar","en_word":"Right / Wrong","en_chunk":null,"en_sentence":"That is the right answer."},{"id":131,"cat":"10 daily descriptive words","id_main":"Penting","id_example":"Ini adalah hal yang sangat penting","en_word":"Important","en_chunk":null,"en_sentence":"This is a very important thing."},{"id":132,"cat":"10 daily descriptive words","id_main":"Indah","id_example":"Pemandangannya sangat indah","en_word":"Beautiful","en_chunk":null,"en_sentence":"The view is very beautiful."},{"id":133,"cat":"10 daily descriptive words","id_main":"Berbahaya","id_example":"Jangan pergi ke sana, itu berbahaya","en_word":"Dangerous","en_chunk":null,"en_sentence":"Don't go there, it is dangerous."},{"id":134,"cat":"10 daily descriptive words","id_main":"Aman","id_example":"Jangan khawatir, di sini sangat aman","en_word":"Safe","en_chunk":null,"en_sentence":"Don't worry, it is very safe here."},{"id":135,"cat":"10 daily descriptive words","id_main":"Bosan","id_example":"Saya merasa bosan dengan rutinitas ini","en_word":"Bored","en_chunk":null,"en_sentence":"I feel bored with this routine."},{"id":136,"cat":"10 daily descriptive words","id_main":"Capek/Lelah","id_example":"Saya lelah setelah bekerja seharian","en_word":"Tired","en_chunk":null,"en_sentence":"I am tired after working all day."},{"id":137,"cat":"10 daily descriptive words","id_main":"Haus","id_example":"Saya butuh air, saya sangat haus","en_word":"Thirsty","en_chunk":null,"en_sentence":"I need water, I am very thirsty."},{"id":138,"cat":"10 daily descriptive words","id_main":"Lapar","id_example":"Mari kita makan, saya merasa lapar","en_word":"Hungry","en_chunk":null,"en_sentence":"Let's eat, I feel hungry."},{"id":139,"cat":"10 daily descriptive words","id_main":"Marah","id_example":"Tolong jangan marah kepada saya","en_word":"Angry","en_chunk":null,"en_sentence":"Please don't be angry with me."},{"id":140,"cat":"10 daily descriptive words","id_main":"Bersih / Kotor","id_example":"Kamarnya sangat kotor sekarang","en_word":"Clean / Dirty","en_chunk":null,"en_sentence":"The room is very dirty now."},{"id":141,"cat":"16 words to connect and ask","id_main":"Dan","id_example":"Saya suka kopi dan teh","en_word":"And","en_chunk":null,"en_sentence":"I like coffee and tea."},{"id":142,"cat":"16 words to connect and ask","id_main":"Tapi","id_example":"Saya ingin pergi tapi saya sibuk","en_word":"But","en_chunk":null,"en_sentence":"I want to go but I am busy."},{"id":143,"cat":"16 words to connect and ask","id_main":"Karena","id_example":"Saya senang karena saya menang","en_word":"Because","en_chunk":null,"en_sentence":"I am happy because I win."},{"id":144,"cat":"16 words to connect and ask","id_main":"Jadi","id_example":"Hari ini hujan, jadi saya tinggal di rumah","en_word":"So","en_chunk":null,"en_sentence":"It is raining today, so I stay at home."},{"id":145,"cat":"16 words to connect and ask","id_main":"Lalu / Kemudian","id_example":"Saya makan, lalu saya tidur","en_word":"Then / And then","en_chunk":null,"en_sentence":"I eat, and then I sleep."},{"id":146,"cat":"16 words to connect and ask","id_main":"Jika","id_example":"Saya akan datang jika saya punya waktu","en_word":"If","en_chunk":null,"en_sentence":"I will come if I have time."},{"id":147,"cat":"16 words to connect and ask","id_main":"Meskipun","id_example":"Meskipun sulit, saya ingin mencoba","en_word":"Although","en_chunk":null,"en_sentence":"Although it is difficult, I want to try."},{"id":148,"cat":"16 words to connect and ask","id_main":"Apa","id_example":"Apa yang kamu lakukan sekarang?","en_word":"What","en_chunk":null,"en_sentence":"What are you doing now?"},{"id":149,"cat":"16 words to connect and ask","id_main":"Mengapa","id_example":"Mengapa kamu datang terlambat?","en_word":"Why","en_chunk":null,"en_sentence":"Why are you late?"},{"id":150,"cat":"16 words to connect and ask","id_main":"Dimana","id_example":"Dimana kantor kamu?","en_word":"Where","en_chunk":null,"en_sentence":"Where is your office?"},{"id":151,"cat":"16 words to connect and ask","id_main":"Kapan","id_example":"Kapan kamu pergi ke Pare?","en_word":"When","en_chunk":null,"en_sentence":"When do you go to Pare?"},{"id":152,"cat":"16 words to connect and ask","id_main":"Siapa","id_example":"Siapa nama tutor kamu?","en_word":"Who","en_chunk":null,"en_sentence":"Who is your tutor?"},{"id":153,"cat":"16 words to connect and ask","id_main":"Bagaimana","id_example":"Bagaimana cara menggunakan ini?","en_word":"How","en_chunk":null,"en_sentence":"How do I use this?"},{"id":154,"cat":"16 words to connect and ask","id_main":"Berapa banyak - Uang/Harga","id_example":"Berapa harga laptop ini?","en_word":"How much","en_chunk":null,"en_sentence":"How much is this laptop?"},{"id":155,"cat":"16 words to connect and ask","id_main":"Berapa banyak - Benda","id_example":"Berapa banyak buku yang kamu punya?","en_word":"How many","en_chunk":null,"en_sentence":"How many books do you have?"},{"id":156,"cat":"16 words to connect and ask","id_main":"Berapa lama - Durasi","id_example":"Berapa lama kamu tinggal di sini?","en_word":"How long","en_chunk":null,"en_sentence":"How long do you stay here?"},{"id":157,"cat":"12 essential key time","id_main":"Tadi pagi","id_example":"Saya melihatnya tadi pagi","en_word":"This morning","en_chunk":null,"en_sentence":"I saw him this morning."},{"id":158,"cat":"12 essential key time","id_main":"Nanti malam","id_example":"Sampai jumpa nanti malam","en_word":"Tonight","en_chunk":null,"en_sentence":"See you tonight."},{"id":159,"cat":"12 essential key time","id_main":"Minggu depan","id_example":"Saya akan pergi ke sana minggu depan","en_word":"Next week","en_chunk":null,"en_sentence":"I will go there next week."},{"id":160,"cat":"12 essential key time","id_main":"Minggu lalu","id_example":"Saya sudah mengirimnya minggu lalu","en_word":"Last week","en_chunk":null,"en_sentence":"I sent it last week."},{"id":161,"cat":"12 essential key time","id_main":"Segera","id_example":"Tolong lakukan itu segera","en_word":"Soon","en_chunk":null,"en_sentence":"Please do it soon."},{"id":162,"cat":"12 essential key time","id_main":"Baru saja","id_example":"Dia baru saja pergi dari sini","en_word":"Just","en_chunk":null,"en_sentence":"He just left this place."},{"id":163,"cat":"12 essential key time","id_main":"Masih","id_example":"Saya masih bekerja sekarang","en_word":"Still","en_chunk":null,"en_sentence":"I am still working now."},{"id":164,"cat":"12 essential key time","id_main":"Sudah","id_example":"Saya sudah menyelesaikan tugasnya","en_word":"Already","en_chunk":null,"en_sentence":"I have already finished the task."},{"id":165,"cat":"12 essential key time","id_main":"Belum","id_example":"Saya belum siap untuk pergi","en_word":"Not yet","en_chunk":null,"en_sentence":"I am not ready yet to go."},{"id":166,"cat":"12 essential key time","id_main":"Kadang-kadang","id_example":"Kadang-kadang saya datang terlambat","en_word":"Sometimes","en_chunk":null,"en_sentence":"Sometimes I come late."},{"id":167,"cat":"12 essential key time","id_main":"Jarang","id_example":"Saya jarang minum kopi di malam hari","en_word":"Rarely","en_chunk":null,"en_sentence":"I rarely drink coffee at night."},{"id":168,"cat":"12 essential key time","id_main":"Biasanya","id_example":"Saya biasanya bangun jam 6 pagi","en_word":"Usually","en_chunk":null,"en_sentence":"I usually wake up at 6 AM."},{"id":169,"cat":"10 survival phrases","id_main":"Meminta bicara pelan","id_example":"Bisakah Anda bicara lebih pelan?","en_word":null,"en_chunk":null,"en_sentence":"Could you speak more slowly, please?"},{"id":170,"cat":"10 survival phrases","id_main":"Meminta pengulangan","id_example":"Bisa tolong ulangi lagi?","en_word":null,"en_chunk":null,"en_sentence":"Could you repeat that, please?"},{"id":171,"cat":"10 survival phrases","id_main":"Menanyakan arti kata","id_example":"Apa artinya kata ini?","en_word":null,"en_chunk":null,"en_sentence":"What does this word mean?"},{"id":172,"cat":"10 survival phrases","id_main":"Cara pengucapan","id_example":"Bagaimana cara mengucapkan ini?","en_word":null,"en_chunk":null,"en_sentence":"How do you pronounce this?"},{"id":173,"cat":"10 survival phrases","id_main":"Bahasa Inggrisnya...","id_example":"Apa bahasa Inggrisnya \"Lampu\"?","en_word":null,"en_chunk":null,"en_sentence":"How do you say \"Lampu\" in English?"},{"id":174,"cat":"10 survival phrases","id_main":"Mengecek pemahaman","id_example":"Apa Anda mengerti maksud saya?","en_word":null,"en_chunk":null,"en_sentence":"Do you know what I mean?"},{"id":175,"cat":"10 survival phrases","id_main":"Meminta waktu","id_example":"Tunggu sebentar, saya sedang mencari katanya","en_word":null,"en_chunk":null,"en_sentence":"Wait a second, I'm looking for the word."},{"id":176,"cat":"10 survival phrases","id_main":"Tidak tahu istilah","id_example":"Saya tidak familiar dengan istilah itu","en_word":null,"en_chunk":null,"en_sentence":"I'm not familiar with that term."},{"id":177,"cat":"10 survival phrases","id_main":"Bantuan ejaan","id_example":"Bisa tolong eja itu untuk saya?","en_word":null,"en_chunk":null,"en_sentence":"Could you spell that for me?"},{"id":178,"cat":"10 survival phrases","id_main":"Selesai bicara","id_example":"Senang bicara denganmu, tapi saya harus pergi","en_word":null,"en_chunk":null,"en_sentence":"It was nice talking to you, but I have to go now."},{"id":179,"cat":"10 essenstial daily expressions","id_main":"Terserah kamu","id_example":"Kita mau makan di mana? Terserah kamu saja","en_word":"It's up to you","en_chunk":null,"en_sentence":"Where do we eat? It's up to you."},{"id":180,"cat":"10 essenstial daily expressions","id_main":"Masuk akal","id_example":"Penjelasanmu masuk akal, saya setuju","en_word":"Make sense","en_chunk":null,"en_sentence":"Your explanation makes sense, I agree."},{"id":181,"cat":"10 essenstial daily expressions","id_main":"Pastikan","id_example":"Tolong pastikan pintunya terkunci sebelum pergi","en_word":"Make sure","en_chunk":null,"en_sentence":"Please make sure the door is locked before you go."},{"id":182,"cat":"10 essenstial daily expressions","id_main":"Lagi bokek / Tidak punya uang","id_example":"Saya tidak bisa ikut, saya lagi bokek bulan ini","en_word":"I'm broke","en_chunk":null,"en_sentence":"I can't join, I'm broke this month."},{"id":183,"cat":"10 essenstial daily expressions","id_main":"Biasa saja / Tidak ada yang spesial","id_example":"Apa yang kamu lakukan hari ini? Biasa saja","en_word":"Nothing special","en_chunk":null,"en_sentence":"What did you do today? Nothing special."},{"id":184,"cat":"10 essenstial daily expressions","id_main":"Lama tidak jumpa","id_example":"Hai Budi! Lama tidak jumpa, apa kabar?","en_word":"Long time no see","en_chunk":null,"en_sentence":"Hi Budi! Long time no see, how are you?"},{"id":185,"cat":"10 essenstial daily expressions","id_main":"Semoga beruntung","id_example":"Semoga beruntung dengan wawancara kerjamu!","en_word":"Good luck","en_chunk":null,"en_sentence":"Good luck with your job interview!"},{"id":186,"cat":"10 essenstial daily expressions","id_main":"Hati-hati / Awas","id_example":"Hati-hati! Lantainya licin/basah","en_word":"Watch out / Be careful","en_chunk":null,"en_sentence":"Watch out! The floor is wet."},{"id":187,"cat":"10 essenstial daily expressions","id_main":"Santai saja","id_example":"Jangan panik, santai saja","en_word":"Take it easy","en_chunk":null,"en_sentence":"Don't panic, just take it easy."},{"id":188,"cat":"10 essenstial daily expressions","id_main":"Tahu nggak? / Coba tebak?","id_example":"Tahu nggak? Saya dapat pekerjaan baru!","en_word":"Guess what?","en_chunk":null,"en_sentence":"Guess what? I got a new job!"},{"id":189,"cat":"8 POWER SWITCHES","id_main":"Bisa / Bisakah","id_example":"bisakah anda membantu saya ?","en_word":"Can / could","en_chunk":null,"en_sentence":"could you help me ?"},{"id":190,"cat":"8 POWER SWITCHES","id_main":"Akan / Maukah","id_example":"saya akan kirim emailnya nanti","en_word":"Will / would","en_chunk":null,"en_sentence":"i will send the email later"},{"id":191,"cat":"8 POWER SWITCHES","id_main":"Harus","id_example":"saya harus pergi sekarang","en_word":"Must / have to","en_chunk":null,"en_sentence":"i have to go now"},{"id":192,"cat":"8 POWER SWITCHES","id_main":"Seharusnya","id_example":"kamu seharusnya beristrahat","en_word":"should","en_chunk":null,"en_sentence":"you should take a rest"},{"id":193,"cat":"8 POWER SWITCHES","id_main":"Mungkin","id_example":"mungkin dia akan datang besok","en_word":"maybe / might","en_chunk":null,"en_sentence":"maybe he will come tomorrow"},{"id":194,"cat":"8 POWER SWITCHES","id_main":"boleh","id_example":"bolehkan saya masuk?","en_word":"may","en_chunk":null,"en_sentence":"may i come in ?"},{"id":195,"cat":"8 POWER SWITCHES","id_main":"Apakah sudah / tidak","id_example":"apakah kamu sudah melihatnya? saya tidak melihatnya","en_word":"Did / didn't","en_chunk":null,"en_sentence":"did you see it? / I didn't see it"},{"id":196,"cat":"8 POWER SWITCHES","id_main":"Adalah / Sedang","id_example":"saya sibuk / harganya mahal","en_word":"To be","en_chunk":"am/is/are","en_sentence":"I am busy / the price is expensive"}];
+
+const STORAGE_KEY = "kartu-harian-progress-v3";
+const DAILY_TARGET = 10;
+
+const PRAISE_MSGS = ["Mantap!", "Bagus sekali!", "Terus lanjutkan!", "Nice, kamu makin lancar!", "Kerja bagus!"];
+const AGAIN_MSGS = ["Santai, ulangi lagi nanti.", "Wajar, ini yang sedang dilatih.", "Oke, kartu ini akan muncul lagi."];
+const DONE_MSGS = [
+  "Konsistensi seperti ini yang bikin lancar bicara sama klien.",
+  "10 kalimat hari ini, satu langkah lebih dekat ke Pare.",
+  "Bahasa Inggris kerja itu dibangun dari kebiasaan kecil seperti ini.",
+  "Rutinitas kecil, hasil besar. Sampai jumpa besok."
+];
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function yesterdayStr(){
+  const d = new Date();
+  d.setDate(d.getDate()-1);
+  return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+}
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function defaultProgress(){
+  return {
+    boxes: {},
+    lastSeen: {},
+    queueDate: null,
+    queueIds: [],
+    doneToday: [],
+    streak: 0,
+    lastCompletedDate: null
+  };
+}
+
+let progress = null;
+let deckFilter = "Semua";      // "Semua" = daily target deck; any other value = focused category session
+let freeMode = false;           // unlocked after finishing daily target, practices full pool without a cap
+let sessionQueue = [];          // active list of items for a focused/free session (not persisted)
+let flipped = false;
+let feedback = "";
+
+const appEl = document.getElementById("app");
+
+async function loadProgress(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){ return Object.assign(defaultProgress(), JSON.parse(raw)); }
+  }catch(e){ console.log("starting fresh", e); }
+  return defaultProgress();
+}
+async function saveProgress(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(progress)); }
+  catch(e){ console.error("failed to save progress", e); }
+}
+
+function getCategories(){
+  const set = [];
+  RAW_DATA.forEach(it => { if(!set.includes(it.cat)) set.push(it.cat); });
+  return set;
+}
+function shortCatLabel(cat){
+  return cat.replace(/^\d+\s*/, "").replace(/^\w/, c => c.toUpperCase());
+}
+function itemsForFilter(filter){
+  return filter === "Semua" ? RAW_DATA : RAW_DATA.filter(it => it.cat === filter);
+}
+function sortByWeakest(pool){
+  return pool.slice().sort((a,b) => {
+    const boxA = progress.boxes[a.id] || 1;
+    const boxB = progress.boxes[b.id] || 1;
+    if(boxA !== boxB) return boxA - boxB;
+    const seenA = progress.lastSeen[a.id] || "";
+    const seenB = progress.lastSeen[b.id] || "";
+    return seenA.localeCompare(seenB);
+  });
+}
+function buildDailyQueue(){
+  const sorted = sortByWeakest(RAW_DATA);
+  return shuffle(sorted.slice(0, DAILY_TARGET)).map(it => it.id);
+}
+function ensureTodayQueue(){
+  const t = todayStr();
+  if(progress.queueDate !== t){
+    progress.queueDate = t;
+    progress.queueIds = buildDailyQueue();
+    progress.doneToday = [];
+    freeMode = false;
+  }
+}
+function inFocusedSession(){
+  return deckFilter !== "Semua" || freeMode;
+}
+function startFocusedSession(){
+  const pool = itemsForFilter(deckFilter);
+  sessionQueue = shuffle(sortByWeakest(pool));
+}
+function currentQueueItems(){
+  if(inFocusedSession()) return sessionQueue;
+  const remaining = progress.queueIds.filter(id => !progress.doneToday.includes(id));
+  return remaining.map(id => RAW_DATA.find(it => it.id === id)).filter(Boolean);
+}
+function speak(text, rate){
+  if(!('speechSynthesis' in window)){ alert("Browser ini tidak mendukung pengucapan suara."); return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = "en-US";
+  utter.rate = rate || 0.9;
+  window.speechSynthesis.speak(utter);
+}
+function handleRate(item, gotIt){
+  const box = progress.boxes[item.id] || 1;
+  progress.boxes[item.id] = gotIt ? Math.min(box + 1, 3) : 1;
+  progress.lastSeen[item.id] = todayStr();
+  feedback = gotIt ? pick(PRAISE_MSGS) : pick(AGAIN_MSGS);
+
+  if(inFocusedSession()){
+    sessionQueue = sessionQueue.filter(it => it.id !== item.id);
+  } else {
+    progress.doneToday.push(item.id);
+    if(progress.doneToday.length >= DAILY_TARGET){
+      const t = todayStr();
+      if(progress.lastCompletedDate !== t){
+        progress.streak = (progress.lastCompletedDate === yesterdayStr()) ? progress.streak + 1 : 1;
+        progress.lastCompletedDate = t;
+      }
+    }
+  }
+  flipped = false;
+  saveProgress();
+  render(true);
+}
+function selectCategory(cat){
+  deckFilter = cat;
+  if(inFocusedSession()){ startFocusedSession(); }
+  render();
+}
+function startFreeMode(){
+  freeMode = true;
+  startFocusedSession();
+  render();
+}
+function backToDaily(){
+  freeMode = false;
+  deckFilter = "Semua";
+  render();
+}
+async function resetProgress(){
+  if(!confirm("Hapus semua progres dan mulai dari awal?")) return;
+  progress = defaultProgress();
+  deckFilter = "Semua";
+  freeMode = false;
+  ensureTodayQueue();
+  await saveProgress();
+  render();
+}
+function masteredCount(){
+  return Object.values(progress.boxes).filter(b => b === 3).length;
+}
+function progressCounts(){
+  const vals = Object.values(progress.boxes);
+  const berkembang = vals.filter(b => b === 2).length;
+  const dikuasai = vals.filter(b => b === 3).length;
+  return { berkembang, dikuasai };
+}
+
+function render(justRated){
+  ensureTodayQueue();
+  const queueItems = currentQueueItems();
+  const doneCount = progress.doneToday.length;
+  const cats = getCategories();
+
+  let chipsHtml = ['<button class="chip ' + (deckFilter==="Semua"?"active":"") + '" data-cat="Semua">Semua</button>']
+    .concat(cats.map(c => '<button class="chip ' + (deckFilter===c?"active":"") + '" data-cat="' + c.replace(/"/g,'&quot;') + '">' + shortCatLabel(c) + '</button>'))
+    .join("");
+
+  let sessionNoteHtml = "";
+  if(deckFilter !== "Semua"){
+    sessionNoteHtml = `<div class="session-note"><span>Latihan fokus: ${shortCatLabel(deckFilter)}</span><button id="backDailyBtn">Kembali ke target harian</button></div>`;
+  } else if(freeMode){
+    sessionNoteHtml = `<div class="session-note"><span>Latihan tambahan (bebas)</span><button id="backDailyBtn">Kembali ke ringkasan</button></div>`;
+  }
+
+  let stageHtml = "";
+  if(queueItems.length === 0 && !inFocusedSession()){
+    stageHtml = `
+      <div class="done-panel">
+        <div class="badge">&#9998;</div>
+        <h2>Target hari ini selesai</h2>
+        <p>${DAILY_TARGET} kalimat sudah dilatih.<br>Streak kamu sekarang <b>${progress.streak} hari beruntun</b>.<br>${pick(DONE_MSGS)}</p>
+        <button class="ghost-btn" id="bonusBtn">Latihan tambahan (bebas)</button>
+      </div>
+    `;
+  } else if(queueItems.length === 0 && inFocusedSession()){
+    stageHtml = `
+      <div class="done-panel">
+        <h2>Deck ini sudah dicoba semua</h2>
+        <p>Pilih kategori lain di atas, atau kembali ke target harian.</p>
+        <button class="ghost-btn" id="backDailyBtn2">Kembali</button>
+      </div>
+    `;
+  } else {
+    const item = queueItems[0];
+    const flipClass = flipped ? "flipped" : "";
+    const popClass = justRated ? "pop" : "";
+    stageHtml = `
+      <div class="card ${flipClass} ${popClass}" id="flashcard">
+        <div class="card-eyebrow">${shortCatLabel(item.cat)}</div>
+        <div class="prompt-block">
+          <div class="prompt-word">${item.id_main}</div>
+          ${item.id_example ? `<div class="prompt-example">${item.id_example}</div>` : ``}
+        </div>
+        <div class="card-hint">Ketuk kartu untuk lihat jawaban Inggrisnya</div>
+        <div class="card-en">
+          <div class="answer-block">
+            <div class="en-word">${item.en_word || ""}</div>
+            ${item.en_chunk ? `<div class="en-chunk">${item.en_chunk}</div>` : ``}
+            <div class="en-sentence">${item.en_sentence}</div>
+          </div>
+          <div class="speak-row">
+            <button class="speak-btn" id="speakNormal">&#128266; Dengarkan</button>
+            <button class="speak-btn slow" id="speakSlow">&#8226; Pelan (shadow)</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  let rateRowHtml = "";
+  if(queueItems.length > 0){
+    rateRowHtml = `
+      <div class="rate-row">
+        <button class="rate-btn again" id="againBtn" ${!flipped?"disabled":""}>Masih belajar</button>
+        <button class="rate-btn got-it" id="gotItBtn" ${!flipped?"disabled":""}>Sudah lancar</button>
+      </div>
+      <div class="tap-instruction ${justRated?"praise":""}">${justRated ? feedback : (flipped ? "Nilai jawabanmu di atas" : "Coba tebak dulu sebelum membuka kartu")}</div>
+    `;
+  }
+
+  let dotsHtml = "";
+  for(let i=0;i<DAILY_TARGET;i++){
+    const cls = i < doneCount ? "filled" : (i === doneCount ? "current" : "");
+    dotsHtml += `<div class="dot ${cls}"></div>`;
+  }
+  const dotsRowHtml = inFocusedSession()
+    ? `<div class="dots-label">${queueItems.length} kartu tersisa di deck ini</div>`
+    : `<div class="dots">${dotsHtml}</div><div class="dots-label">${doneCount} / ${DAILY_TARGET}</div>`;
+
+  appEl.innerHTML = `
+    <header>
+      <h1>Kartu Harian</h1>
+      <div class="streak"><b>${progress.streak}</b><br>hari beruntun</div>
+    </header>
+
+    <div class="dots-row">${dotsRowHtml}</div>
+
+    <div class="chips-wrap"><div class="chips">${chipsHtml}</div></div>
+
+    ${sessionNoteHtml}
+
+    <div class="stage">${stageHtml}</div>
+
+    ${rateRowHtml}
+
+    <footer>
+      <span title="Kartu perlu 3x ditandai 'Sudah lancar' untuk dianggap dikuasai penuh">${(() => { const c = progressCounts(); return c.berkembang + " berkembang &middot; " + c.dikuasai + " dikuasai / " + RAW_DATA.length; })()}</span>
+      <button class="reset-link" id="resetBtn">reset progres</button>
+    </footer>
+  `;
+
+  const cardEl = document.getElementById("flashcard");
+  if(cardEl){ cardEl.addEventListener("click", () => { flipped = !flipped; render(); }); }
+  const speakNormal = document.getElementById("speakNormal");
+  if(speakNormal){ speakNormal.addEventListener("click", (e) => { e.stopPropagation(); speak(queueItems[0].en_sentence, 0.95); }); }
+  const speakSlow = document.getElementById("speakSlow");
+  if(speakSlow){ speakSlow.addEventListener("click", (e) => { e.stopPropagation(); speak(queueItems[0].en_sentence, 0.6); }); }
+  const againBtn = document.getElementById("againBtn");
+  if(againBtn){ againBtn.addEventListener("click", (e) => { e.stopPropagation(); if(flipped) handleRate(queueItems[0], false); }); }
+  const gotItBtn = document.getElementById("gotItBtn");
+  if(gotItBtn){ gotItBtn.addEventListener("click", (e) => { e.stopPropagation(); if(flipped) handleRate(queueItems[0], true); }); }
+  const bonusBtn = document.getElementById("bonusBtn");
+  if(bonusBtn){ bonusBtn.addEventListener("click", startFreeMode); }
+  const backDailyBtn = document.getElementById("backDailyBtn");
+  if(backDailyBtn){ backDailyBtn.addEventListener("click", backToDaily); }
+  const backDailyBtn2 = document.getElementById("backDailyBtn2");
+  if(backDailyBtn2){ backDailyBtn2.addEventListener("click", backToDaily); }
+  const resetBtn = document.getElementById("resetBtn");
+  if(resetBtn){ resetBtn.addEventListener("click", resetProgress); }
+  document.querySelectorAll(".chip").forEach(chip => {
+    chip.addEventListener("click", () => { selectCategory(chip.getAttribute("data-cat")); });
+  });
+}
+
+(async function init(){
+  progress = await loadProgress();
+  ensureTodayQueue();
+  await saveProgress();
+  render();
+})();
+
+if("serviceWorker" in navigator){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
